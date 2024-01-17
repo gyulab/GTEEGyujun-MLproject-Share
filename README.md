@@ -4,3 +4,4 @@
 - Optimization-branch: Implementing ML optimization - Dropout, ReLu, BatchNorm, Rate, etc.
 - CNN-branch: CNN Model implementation
 - RNN-branch: RNN Model implementation: LSTM, GRU
+- E-mail: gjeong35@gatech.edu
