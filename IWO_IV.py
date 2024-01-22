@@ -32,8 +32,8 @@ os.getcwd()
 
 start = time.time()
 
-idvg_temp = pd.read_csv(r'/content/GTEEGyujun-MLproject/Datasets/idvg_iwo_0206.csv', encoding='utf8')
-cv_temp = pd.read_csv(r'/content/GTEEGyujun-MLproject/Datasets/cv_iwo_0212_dataset.csv', encoding='utf8')
+idvg_temp = pd.read_csv(r'/content/drive/MyDrive/Colab_ML_ProfYu/csv_data/idvg_iwo_0206.csv', encoding='utf8')
+cv_temp = pd.read_csv(r'/content/drive/MyDrive/Colab_ML_ProfYu/csv_data/cv_iwo_0212_dataset.csv', encoding='utf8')
 #cv_temp=pd.read_csv(r'./cv_iwo_0206.csv', encoding='utf8')
 # idvg=idvg_temp.values
 
@@ -145,23 +145,23 @@ class MLP(torch.nn.Module):
         self.dropout = torch.nn.Dropout(0.2)
         self.tanh = torch.nn.Tanh()
         self.relu = torch.nn.ReLU()
+        self.elu = torch.nn.ELU(1.0)
         self.leaky_relu = torch.nn.LeakyReLU(0.01)
         self.bn1 = torch.nn.BatchNorm1d(25)
         self.bn2 = torch.nn.BatchNorm1d(12)
         self.bn3 = torch.nn.BatchNorm1d(1)
-    
+
     def forward(self, x):
         x = self.fc1(x)
         #x = self.bn1(x)
-        x = self.leaky_relu(x)
+        x = self.elu(x)
         #x = self.dropout(x)
         x = self.fc2(x)
         #x = self.bn2(x)
-        x = self.leaky_relu(x)
+        x = self.elu(x)
         #x = self.dropout(x)
         x = self.fc3(x)
         #x = self.bn3(x)
-        #x = self.tanh(x)
         return x
 
 # Create an instance of the MLP class
@@ -181,10 +181,10 @@ scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0
 # losses = []
 # criterion = nn.MSELoss() # <== 파이토치에서 제공하는 평균 제곱 오차 함수\
 
-nb_epochs = 3000
-MLoss = [] 
+nb_epochs = 1000
+MLoss = []
 for epoch in range(0, nb_epochs):
-     
+
     current_loss = 0.0
     losses = []
     # Iterate over the dataloader for training data
@@ -207,7 +207,7 @@ for epoch in range(0, nb_epochs):
                 batch_loss.append(L_weight*loss_function(outputs[j], targets[j]))
             else:
                 batch_loss.append(loss_function(outputs[j], targets[j]))
-        
+
         loss = torch.stack(batch_loss).mean()
 
         losses.append(loss.item())
@@ -217,7 +217,7 @@ for epoch in range(0, nb_epochs):
         #perform optimization
         optimizer.step()
         # Print statistics
-    
+
     mean_loss = sum(losses)/len(losses)
     scheduler.step(mean_loss)
 
@@ -252,7 +252,7 @@ plt.ylabel("Loss")
 plt.show()
 
 with torch.no_grad():
-    
+
     output = []
     # Iterate over the dataloader for training data
     for i, data in enumerate(testdataloader, 0):
@@ -395,7 +395,7 @@ Id15_test = [0.000010230849,	0.000012273384,	0.000015334923,	0.000018393846,	0.0
 Id_test =  [0.000012969341,	0.000015560565,	0.000019445809,	0.000023329203,	0.000028504135,	0.000034968453,	0.000044010611,	0.000053044062,	0.000064646594,	0.000080097706,	0.000096815121,	0.000118649,	0.00014559015,	0.00017764185,	0.00021740052,	0.0002662518,	0.00032573661,	0.0004003178,	0.00049245958,	0.00060963036,	0.00075939393,	0.00095209114,	0.0012021121,	0.0015230151,	0.0019258635,	0.0024179715,	0.0029806776,	0.003633391,	0.0042757708,	0.0047633642]
 
 # x_test = np.power(10, x_test)
-    
+
 plt.scatter(Vd_test, Id05_test) ## TCAD
 plt.scatter(Vd_test, Id1_test) ## TCAD
 plt.scatter(Vd_test, Id15_test) ## TCAD
@@ -417,7 +417,7 @@ plt.ylabel("Current [A/um]")
 plt.show()
 print(np.round(x_test, 3).tolist)
 print(I_final)
-print(I_final1) 
+print(I_final1)
 print(I_final15)
 print("")
 
@@ -544,7 +544,7 @@ for i in range(25):
     inputs = ["*".join([str(weights_1[i][j]), inp]) for j, inp in enumerate(inputs)]
     inputs = "+".join(inputs)
     inputs = "+".join([inputs, str(bias_1[i])])
-    verilog_code += "h1_{} = tanh({});\n".format(i, inputs)
+    verilog_code += "h1_{} = ELU({});\n".format(i, inputs)
 
 # Create the Verilog-A code for the 2nd hidden layer
 verilog_code += "real h2_0, h2_1, h2_2, h2_3, h2_4, h2_5, h2_6, h2_7, h2_8, h2_9, h2_10, h2_11;\n"
@@ -553,7 +553,7 @@ for i in range(12):
     inputs = ["*".join([str(weights_2[i][j]), inp]) for j, inp in enumerate(inputs)]
     inputs = "+".join(inputs)
     inputs = "+".join([inputs, str(bias_2[i])])
-    verilog_code += "h2_{} = tanh({});\n".format(i, inputs)
+    verilog_code += "h2_{} = ELU({});\n".format(i, inputs)
 
 # Create the Verilog-A code for the output layer
 inputs = ["h2_{}".format(i) for i in range(12)]
@@ -597,6 +597,18 @@ else begin
 end
 	Vds = (abs(Vd-Vs) - MinVd) * normVd ;
 	Lg = (L -MinLg)*normLg ;
+
+function real ELU;
+    input real x;
+    real alpha = 1.0; // Setting alpha value
+    begin
+        if (x > 0) begin
+            ELU = x;
+        end else begin
+            ELU = alpha * (exp(x) - 1);
+        end
+    end
+endfunction
 
 
 {}
