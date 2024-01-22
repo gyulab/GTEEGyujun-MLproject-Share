@@ -32,8 +32,8 @@ os.getcwd()
 
 start = time.time()
 
-idvg_temp=pd.read_csv(r'./idvg_iwo_0206.csv', encoding='utf8')
-cv_temp=pd.read_csv(r'./cv_iwo_0212.csv', encoding='utf8')
+idvg_temp=pd.read_csv(r'/content/drive/MyDrive/Colab_ML_ProfYu/csv_data/idvg_iwo_0206.csv', encoding='utf8')
+cv_temp=pd.read_csv(r'/content/drive/MyDrive/Colab_ML_ProfYu/csv_data/cv_iwo_0212_dataset.csv', encoding='utf8')
 # idvg=idvg_temp.values
 
 
@@ -108,17 +108,27 @@ class CVMLP(torch.nn.Module):
         self.fc1 = torch.nn.Linear(3, 17)
         self.fc2 = torch.nn.Linear(17, 17)
         self.fc3 = torch.nn.Linear(17, 1)
-        # self.fc3 = torch.nn.Linear(5, 1)
+        self.dropout = torch.nn.Dropout(0.2)
         self.tanh = torch.nn.Tanh()
-    
+        self.relu = torch.nn.ReLU()
+        self.elu = torch.nn.ELU(1)
+        self.leaky_relu = torch.nn.LeakyReLU(0.01)
+        self.bn1 = torch.nn.BatchNorm1d(17)
+        self.bn2 = torch.nn.BatchNorm1d(17)
+        self.bn3 = torch.nn.BatchNorm1d(1)
+
     def forward(self, x):
         x = self.fc1(x)
-        x = self.tanh(x)
+        #x = self.bn1(x)
+        x = self.elu(x)
+        #x = self.dropout(x)
         x = self.fc2(x)
-        x = self.tanh(x)
+        #x = self.bn2(x)
+        x = self.elu(x)
+        #x = self.dropout(x)
         x = self.fc3(x)
-        # x = self.tanh(x)
-        # x = self.fc4(x)
+        #x = self.bn3(x)
+        #x = self.tanh(x)
         return x
 
 # Create an instance of the MLP class now adjusting size 3-30-25-1 --> 3-25-25-1 --> 3-20-20-1 --> 3-15-15-1
@@ -133,16 +143,17 @@ torch.nn.init.xavier_uniform_(model.fc3.weight)
 # torch.nn.init.xavier_uniform(model.fc4.weight)
 
 loss_function = nn.MSELoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+#optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.001, betas=(0.9, 0.999), eps=1e-08)
 scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5)
 
 # losses = []
 # criterion = nn.MSELoss() # <== 파이토치에서 제공하는 평균 제곱 오차 함수\
 
-nb_epochs = 3000
-MLoss = [] 
+nb_epochs = 1000
+MLoss = []
 for epoch in range(0, nb_epochs):
-     
+
     current_loss = 0.0
     losses = []
     # Iterate over the dataloader for training data
@@ -166,7 +177,7 @@ for epoch in range(0, nb_epochs):
                 batch_loss.append(L_weight*loss_function(outputs[j], targets[j]))
             else:
                 batch_loss.append(loss_function(outputs[j], targets[j]))
-        
+
         loss = torch.stack(batch_loss).mean()
 
         losses.append(loss.item())
@@ -177,13 +188,13 @@ for epoch in range(0, nb_epochs):
         #perform optimization
         optimizer.step()
         # Print statistics
-    
+
     mean_loss = sum(losses)/len(losses)
     scheduler.step(mean_loss)
 
     print('Loss (epoch: %4d): %.8f' %(epoch+1, mean_loss))
     current_loss = 0.0
-    
+
     MLoss.append(mean_loss)
 # Process is complete.
 print('Training process has finished.')
@@ -204,7 +215,7 @@ plt.ylabel("Loss")
 plt.show()
 
 with torch.no_grad():
-    
+
     output = []
     # Iterate over the dataloader for training data
     for i, data in enumerate(testdataloader, 0):
@@ -479,7 +490,7 @@ for i in range(17):
     inputs = ["*".join([str(weights_1[i][j]), inp]) for j, inp in enumerate(inputs)]
     inputs = "+".join(inputs)
     inputs = "+".join([inputs, str(bias_1[i])])
-    verilog_code += "hc1_{} = tanh({});\n".format(i, inputs)
+    verilog_code += "hc1_{} = ELU({});\n".format(i, inputs)
 
 # Create the Verilog-A code for the 2nd hidden layer
 verilog_code += "real hc2_0, hc2_1, hc2_2, hc2_3, hc2_4, hc2_5, hc2_6, hc2_7, hc2_8, hc2_9;\n"
@@ -489,7 +500,7 @@ for i in range(17):
     inputs = ["*".join([str(weights_2[i][j]), inp]) for j, inp in enumerate(inputs)]
     inputs = "+".join(inputs)
     inputs = "+".join([inputs, str(bias_2[i])])
-    verilog_code += "hc2_{} = tanh({});\n".format(i, inputs)
+    verilog_code += "hc2_{} = ELU({});\n".format(i, inputs)
 
 # Create the Verilog-A code for the output layer
 inputs = ["hc2_{}".format(i) for i in range(5)]
@@ -525,6 +536,19 @@ else begin
 end
 	Vds = (abs(Vd-Vs) - MinVd) * normVd ;
 	Lg = (L -MinLg)*normLg ;
+
+function real ELU;
+    input real x;
+    real alpha = 1.0; // Setting alpha value
+    begin
+        if (x > 0) begin
+            ELU = x;
+        end else begin
+            ELU = alpha * (exp(x) - 1);
+        end
+    end
+endfunction
+
 
 {}
 
