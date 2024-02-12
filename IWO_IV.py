@@ -163,16 +163,9 @@ def physics_loss(y_true, y_pred, v_true, v_pred, alpha, beta, gamma):
     log_scale_loss = F.mse_loss(torch.log(y_true.clamp(min=1e-8)), torch.log(y_pred.clamp(min=1e-8)))
     
     # Calculate the derivatives of Id with respect to Vg and Vd
-    # Assuming 'v_true' and 'v_pred' are tensors with the same shape as 'y_true' and 'y_pred'
-    # containing the true and predicted voltages respectively
-    #dId_dVg = torch.gradient(y_true, v_true)[0] - torch.gradient(y_pred, v_pred)[0]
-    #dId_dVd = torch.gradient(y_true, v_true)[1] - torch.gradient(y_pred, v_pred)[1]
-
-    # Ensure inputs have requires_grad=True somewhere before this computation
     y_pred.requires_grad_(True)
 
     # Compute gradients of y_pred with respect to inputs
-    # This example assumes y_pred is scalar (e.g., loss). If y_pred is not scalar, you need to specify grad_outputs
     grad_outputs = torch.ones_like(y_pred)  # Necessary if y_pred is not scalar
     dId_dVg, dId_dVd = torch.autograd.grad(outputs=y_pred, inputs=[inputs[:, 0], inputs[:, 1]], grad_outputs=torch.ones_like(y_pred), create_graph=True, allow_unused=True)
 
@@ -186,7 +179,6 @@ def physics_loss(y_true, y_pred, v_true, v_pred, alpha, beta, gamma):
 
     # Combine the components into the total physics-informed loss
     total_loss = rmse_loss + alpha * log_scale_loss + beta * numerical_scale_loss + gamma * (F.relu(dId_dVg) + F.relu(dId_dVd))
-    
     return total_loss
 
 def check_nan(tensor, name="Tensor"):
@@ -258,8 +250,6 @@ for epoch in range(0, nb_epochs):
 
 # Process is complete.
 print('Training process has finished.')
-
-
 
 torch.save(model, 'IWO_idvg.pt')
 torch.save(model.state_dict(), 'IWO_idvg_state_dict.pt')
