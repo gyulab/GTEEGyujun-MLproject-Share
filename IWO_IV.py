@@ -209,7 +209,7 @@ scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.5)
 # losses = []
 # criterion = nn.MSELoss() # <== 파이토치에서 제공하는 평균 제곱 오차 함수\
 
-nb_epochs = 1000
+nb_epochs = 10000
 MLoss = []
 for epoch in range(0, nb_epochs):
 
