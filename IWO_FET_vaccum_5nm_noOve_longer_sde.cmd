@@ -238,8 +238,8 @@ Solve {
 ;-------------------------------------------- Drain Metal --------------------------------------------
 
 (sdegeo:create-rectangle 
-(position (- 0  tox tch) (+ ltot Lgap) 0.0)  
-(position (- 0  tox tch tSD) (+ ltot Lgap lbmov)  0) "Metal" "Drain")
+(position (+ (- 0  tox tch) offset) (+ ltot Lgap) 0.0)  
+(position (+ (- 0  tox tch tSD) offset) (+ ltot Lgap lbmov)  0) "Metal" "Drain")
 
 ;-------------------------------------------- top Oxide --------------------------------------------
 
