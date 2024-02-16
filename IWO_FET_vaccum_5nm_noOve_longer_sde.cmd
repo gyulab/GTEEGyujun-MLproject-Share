@@ -168,6 +168,7 @@ Solve {
 (define Lgap @Lgap@)
 (define Lmax @<3*Lgap>@)
 (define Nd @Nd@)
+(define offset @offset@)
 
 (define ltot (+ (* lbmov 2) (* tox 2) lch))   ; derived expression for ltot
 
