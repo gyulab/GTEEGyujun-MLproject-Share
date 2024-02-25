@@ -73,6 +73,31 @@ else begin
 	dir = -1;
 end
 
+	// PBTI parameters
+	real stress_time; 
+	initial begin
+		stress_time = 0; // Initialize stress time
+	end
+
+	parameter alpha_PBTI = 2.055;
+	parameter n_PBTI = 0.265;
+	parameter Ea_PBTI = 0.312; // Activation energy in eV
+	parameter T = 300; // Temperature in Kelvin, 300-360K
+	real delta_Vth_PBTI;
+
+    // Accumulate stress time when the device is under stress 
+    if (stress condition) // e.g., Vgsraw > threshold_voltage 
+	begin
+      stress_time = stress_time + `abstime;
+	end
+	
+    // PBTI effect calculation
+    delta_Vth_PBTI = alpha_PBTI * pow(Vgs, n_PBTI) * exp(-Ea_PBTI / (`BOLTZMANN * T)) * pow(stress_time, n_PBTI);
+
+    // Incorporate the threshold voltage shift due to PBTI into model equations
+    Vgs = Vgs - delta_Vth_PBTI;
+
+
 	Vds = (abs(Vd-Vs) - MinVd) * normVd ;
 
 	Lg = (L -MinLg)*normLg ;
@@ -183,6 +208,8 @@ else begin
 	I(d, s) <+ dir*Id*W ;
 
 end
+
+
 
 end
 
